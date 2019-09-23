@@ -17,7 +17,7 @@ class PUMAs(Dataset):
     """
 
     @classmethod
-    def downlaod(cls, **kwargs):
+    def downlood(cls, **kwargs):
         """
         Download the PUMA boundaries
         """
