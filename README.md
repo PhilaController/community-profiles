@@ -26,3 +26,60 @@ Public Use Microdata Sample (PUMA) regions in Philadelphia, use:
 9   4203204                Philadelphia City (North) PUMA  POLYGON ((1752340.788933472 478799.6010950198,...
 10  4203206            Philadelphia City (Northwest) PUMA  POLYGON ((1745313.497459354 480215.0811579982,...
 ```
+
+## Development
+
+### Setting up local branches
+
+1. Fork the repository to get a copy under your own user name.
+
+2. Clone the forked repository. From command line:
+
+   ```
+   git clone https://github.com/USERNAME/community-profiles.git
+   ```
+
+   Now, the "master" branch will be set up to
+
+3. Set up the "upstream" repository so we can keep your forked version up-to-date.
+
+   ```
+   git remote add upstream https://github.com/PhiladelphiaController/community-profiles.git
+   ```
+
+4. Now, if you run:
+
+   ```
+   git remove -v
+   ```
+
+   you should see two remote repositories: "origin" and "upstream" listed.
+
+### Workflow steps
+
+1.  Make changes locally and commit them to the "master" branch of your forked repository.
+    To add add a file to git control:
+
+        ```
+        git add example.py
+        ```
+
+        And then you can commit that file with a message:
+
+        ```
+        git ci example -m "this is an example commit"
+        ```
+
+2.  Next, you can push those changes to your forked repository on Github:
+
+    ```
+    git push origin master
+    ```
+
+3.  We can merge this new changes back in to the upstream repository ("PhiladelphiaController/community-profiles") using a pull request. Details on
+    creating a pull request can be found [here](https://help.github.com/en/articles/creating-a-pull-request).
+4.  You can sync changes from the upstream repository by:
+    ```
+    git pull upstream master --rebase
+    ```
+    This will sync the master branch of your forked repository with the master branch of the upstream master.
