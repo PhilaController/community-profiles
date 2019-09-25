@@ -25,13 +25,29 @@ class PUMAs(Dataset):
         url = "https://usa.ipums.org/usa/resources/volii/shapefiles/ipums_puma_2010.zip"
         df = gpd.read_file(url)
 
-        # Trim
+        # Specify the CRS explicitly
+        df.crs = {
+            "proj": "aea",
+            "lat_1": 29.5,
+            "lat_2": 45.5,
+            "lat_0": 37.5,
+            "lon_0": -96,
+            "x_0": 0,
+            "y_0": 0,
+            "datum": "NAD83",
+            "units": "m",
+            "no_defs": True,
+        }
+
+        # Trim to Philadelphia
         in_philly = df.Name.str.contains("Philadelphia")
         df = df.loc[in_philly]
 
         # Return
-        return df.loc[:, ["GEOID", "Name", "geometry"]].rename(
-            columns={"GEOID": "puma_id", "Name": "puma_name"}
+        return (
+            df.loc[:, ["GEOID", "Name", "geometry"]]
+            .rename(columns={"GEOID": "puma_id", "Name": "puma_name"})
+            .to_crs(epsg=EPSG)
         )
 
 
