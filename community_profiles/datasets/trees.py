@@ -52,7 +52,7 @@ class TreeCanopyOutline(Dataset):
         gdf = carto2gpd.get(url, "ppr_tree_canopy_outlines_2015")  ### connection terminated when I try 
 
         return (
-            df.to_crs(epsg=EPSG) 
+            gdf.to_crs(epsg=EPSG) 
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
@@ -76,7 +76,7 @@ class TreeCanopyPoint(Dataset):
         gdf = carto2gpd.get(url, "ppr_tree_canopy_points_2015")
 
         return (
-           df.to_crs(epsg=EPSG) 
+           gdf.to_crs(epsg=EPSG) 
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
