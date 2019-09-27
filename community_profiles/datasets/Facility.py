@@ -1,10 +1,16 @@
 import esri2gpd
 import geopandas as gpd
 from . import EPSG
-from .core import Dataset
+from .core import Dataset, geocode, replace_missing_geometries
+from .regions import *
 
 
-__all__ = ["CityOwned", "Schools", "Parks", "Hospitals", "HealthCenters"]
+__all__ = [
+    "CityOwned", 
+    "Parks", 
+    "Hospitals", 
+    "HealthCenters",
+]
 
 
 class CityOwned(Dataset):
@@ -23,26 +29,13 @@ class CityOwned(Dataset):
         url = "http://data.phl.opendata.arcgis.com/datasets/b3c133c3b15d4c96bcd4d5cc09f19f4e_0.zip"
         df = gpd.read_file(url)
 
-        return df.to_crs(epsg=EPSG) 
-
-    
-    
-class Schools(Dataset):
-    """
-    Philadephia's schools (all types) 
-    
-    Source
-    ------
-    https://phl.maps.arcgis.com/home/item.html?id=d46a7e59e2c246c891fbee778759717e
-    """
-
-    @classmethod
-    def download(cls, **kwargs):
-
-        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Schools/FeatureServer/0"
-        return esri2gpd.get(url).to_crs(epsg=EPSG)    
-    
-   
+        return (
+            df.to_crs(epsg=EPSG) 
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+        )
+ 
 
     
 class Parks(Dataset):
@@ -56,9 +49,23 @@ class Parks(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
+        
+        fields = [
+            "OBJECTID", 
+            "ASSET_NAME", 
+            "SITE_NAME", 
+            "ADDRESS" ,
+        ]
 
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/PPR_Assets/FeatureServer/0"
-        return esri2gpd.get(url).to_crs(epsg=EPSG)    
+        gdf = esri2gpd.get(url, fields=fields)
+        
+        return ( 
+             gdf.to_crs(epsg=EPSG)
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+        )
     
     
     
@@ -73,9 +80,22 @@ class Hospitals(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
-
+        
+        fields= [ 
+            "HOSPITAL_NAME", 
+            "STREET_ADDRESS", 
+            "HOSPITAL_TYPE" ,
+        ]
+        
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Hospitals/FeatureServer/0"
-        return esri2gpd.get(url).to_crs(epsg=EPSG)    
+        gdf = esri2gpd.get(url, fields=fields)
+        
+        return (
+             gdf.to_crs(epsg=EPSG)
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+        )
     
     
     
@@ -94,6 +114,13 @@ class HealthCenters(Dataset):
         url = "http://data.phl.opendata.arcgis.com/datasets/f87c257e1039470a8a472694c2cd2e4f_0.zip"
         df = gpd.read_file(url)
 
-        return df.to_crs(epsg=EPSG) 
+        return (
+            df.loc[:, ['NAME', 'FULL_ADDRE', 'geometry']]
+            .to_crs(epsg=EPSG)
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+        )
+    
     
     
