@@ -3,6 +3,8 @@ import geopandas as gpd
 from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
+import community_profiles.datasets as cp_data
+
 
 __all__ = [
     "LandUse",
@@ -33,11 +35,50 @@ class LandUse(Dataset):
     def download(cls, **kwargs):
 
         url = "https://phl.carto.com/api/v2/sql"
-        gdf = carto2gpd.get(url, "land_use") 
+        fields = [
+            "c_dig1",
+        ]
         
-        return gdf.to_crs(epsg=EPSG) 
+        gdf = carto2gpd.get(url, "land_use", fields = fields) 
+        
+        return (
+            gdf.to_crs(epsg=EPSG)
+            .rename(columns={'c_dig1': 'Type'})
+        )
+
     
     
+def create_multipolygon(puma_name):
+    """ Makes subsection of data depending on puma (puma_name). 
+        
+        Takes the types of land use (c_dig1) and creates 1 large polygon for each.
+        
+        Returns dataframe with each polygon (9 types of landuse so 9 different polygon). """
+    
+    puma = join.loc[join['puma_name'] == puma_name]
+    
+    poly_group = puma.dissolve(by='Type')
+    
+    return poly_group   
+
+    
+class disolved_landuse():
+    
+    land = cp_data.LandUse.get() 
+    pumas = cp_data.LandUse.get()
+    
+    join = gpd.sjoin(land, pumas , how="inner", op='within')
+    
+    list_polys = [] 
+    
+    for i in pumas['puma_name']: 
+        list_polys.append(create_multipolygon(i))
+        
+    return (pd.concat(list_polys))     
+    
+    
+
+
     
 class  NewConstruction(Dataset):
     """
@@ -57,7 +98,7 @@ class  NewConstruction(Dataset):
         where = "extract(year from permitissuedate) = 2018 and permitdescription = 'NEW CONSTRUCTION PERMIT'"
         gdf = carto2gpd.get(url, "li_permits", where = where) 
         
-        return g(
+        return (
             replace_missing_geometries(gdf)
             .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
