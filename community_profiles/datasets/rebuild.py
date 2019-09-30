@@ -31,7 +31,6 @@ class Rebuild(Dataset):
             esri2gpd.get(url, fields = fields)
             .to_crs(epsg=EPSG)
             .rename(columns={'Copy_of_Master_Site_List_9_24_8': 'STATUS'})
-            .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
