@@ -76,7 +76,9 @@ class persons(Dataset):
                                         10 : 'walk',
                                         11 : 'work at home',
                                         12 : 'other'})               
-        return df.rename(columns={'PWGTP': 'person_weight', 'RAC1P': 'RACE', 'JWTR' : 'COM_TYP', 'JWMNP' : 'COM_TIME', 'ESR': 'EMPLOY'}) 
+        return df.rename(columns={'PUMA': 'puma_id', 'PWGTP': 'person_weight', 
+                                  'RAC1P': 'RACE', 'JWTR' : 'COM_TYP', 
+                                  'JWMNP' : 'COM_TIME', 'ESR': 'EMPLOY'}) 
     
     
     
@@ -106,6 +108,9 @@ class houses(Dataset):
                         'HINCP',
                         'GRNTP' ]
                    ]
-        return df.rename(columns={'WGTP': 'house_weight', 'HINCP' : 'house_income', 'GRNTP' : 'month_rent'}) 
+        return df.rename(columns={'PUMA': 'puma_id',
+                                  'WGTP': 'house_weight', 
+                                  'HINCP' : 'house_income', 
+                                  'GRNTP' : 'month_rent'}) 
         
         
