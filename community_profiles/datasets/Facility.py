@@ -82,6 +82,7 @@ class Hospitals(Dataset):
     def download(cls, **kwargs):
         
         fields= [ 
+            "OBJECTID",
             "HOSPITAL_NAME", 
             "STREET_ADDRESS", 
             "HOSPITAL_TYPE" ,
@@ -115,7 +116,7 @@ class HealthCenters(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.loc[:, ['NAME', 'FULL_ADDRE', 'geometry']]
+            df.loc[:, ['NAME','OBJECTID' ,'FULL_ADDRE', 'geometry']]
             .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
