@@ -18,13 +18,13 @@ class StreetCondition(Dataset):
     
     Source
     ------
-    https://phl.maps.arcgis.com/home/item.html?id=4df9250e3d624ea090718e56a9018694
+    http://phl.maps.arcgis.com/home/item.html?id=288d67ea531c4e1a96ebe43a78b97ca8
     """
 
     @classmethod
     def download(cls, **kwargs):
 
-        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/PPR_Assets/FeatureServer/0"
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Street_Defect_Rating/FeatureServer/0"
         gdf = esri2gpd.get(url)
         
         return ( 
@@ -48,12 +48,15 @@ class LitterIndex(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
+        
+    
 
         url = "http://data-phl.opendata.arcgis.com/datasets/04fa63e09b284dbfbde1983eab367319_0.zip"
         df = gpd.read_file(url)
 
         return (
-            df.to_crs(epsg=EPSG) 
+            df.rename(columns={ 'HUNDRED_BL' : 'score'}) 
+            .to_crs(epsg=EPSG) 
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())

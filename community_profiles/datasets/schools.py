@@ -3,6 +3,7 @@ import geopandas as gpd
 from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
+import pandas as pd
 
 __all__ = [
     "Schools",
@@ -61,7 +62,7 @@ class SchoolScores(Dataset):
                 "School_Progress_Report/SPR_SY1718_School_Metric_Scores_20190129.xlsx") 
         df = pd.read_excel(url, sheet_name='SPR SY2017-2018 ES')
 
-        return df.to_crs(epsg=EPSG)     
+        return df    
  
 
 ###
