@@ -40,6 +40,7 @@ class CrimeIncidents(Dataset):
             "text_general_code",
             "ucr_general",
         ]
+        
         url = "https://phl.carto.com/api/v2/sql"
         where = "extract(year from dispatch_date_time) = 2018"
         gdf = carto2gpd.get(url, "incidents_part1_part2", fields=fields, where=where)

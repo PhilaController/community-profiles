@@ -3,11 +3,13 @@ import pandas as pd
 from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
-import requests, zipfile, io
 import community_profiles.datasets as cp_data
 import numpy as np 
+import tempfile
+import requests, zipfile, io
 
 
+# load puma data 
 pumas = cp_data.PUMAs.get()  
 pumas['puma_id'] = pumas['puma_id'].astype(str).str[3:].astype(np.int64)
 
@@ -30,14 +32,17 @@ class persons(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
-
-        url = 'https://www2.census.gov/programs-surveys/acs/data/pums/2017/5-Year/csv_ppa.zip'
-        r = requests.get(url)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall()
-        df = pd.read_csv(z.open('psam_p42.csv'))
+       
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            url = 'https://www2.census.gov/programs-surveys/acs/data/pums/2017/5-Year/csv_ppa.zip'
+            r = requests.get(url)
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extract('psam_p42.csv', path = tmpdirname)
+            df = pd.read_csv(z.open('psam_p42.csv'))
+        
         df = (df.loc[df['PUMA']
                     .isin(pumas['puma_id'])])
+        
         df = df.loc[:, ['PUMA',
                         'PWGTP',
                         'AGEP', 
@@ -49,12 +54,14 @@ class persons(Dataset):
                         'ENG',
                         'ESR',
                         'JWMNP',
-                        'JWTR']
+                        'JWTR',]
                    ]        
         df['SEX'] = df['SEX'].map({1 : 'male',  
                                    2 : 'female'}) 
+        
         df['NATIVITY'] = df['NATIVITY'].map({1 : 'non-foreign', 
-                                             2 : 'foreign'}) 
+                                             2 : 'foreign',}) 
+        
         df['RAC1P'] = df['RAC1P'].map({1 : 'white alone',
                                        2 : 'black alone',
                                        3 : 'american indian alone',
@@ -63,7 +70,8 @@ class persons(Dataset):
                                        6 : 'asian alone',
                                        7 : 'native hawaiian/other pacific alone',
                                        8 : 'some other race alone',
-                                       9 : 'two or more races'})
+                                       9 : 'two or more races',})
+        
         df['JWTR'] = df['JWTR'].map({1 : 'car,truck,van',
                                         2 : 'bus or trolley',
                                         3 : 'streetcar',
@@ -75,10 +83,14 @@ class persons(Dataset):
                                         9 : 'bicycle', 
                                         10 : 'walk',
                                         11 : 'work at home',
-                                        12 : 'other'})               
-        return df.rename(columns={'PUMA': 'puma_id', 'PWGTP': 'person_weight', 
-                                  'RAC1P': 'RACE', 'JWTR' : 'COM_TYP', 
-                                  'JWMNP' : 'COM_TIME', 'ESR': 'EMPLOY'}) 
+                                        12 : 'other',})      
+        
+        return df.rename(columns={'PUMA': 'puma_id', 
+                                  'PWGTP': 'person_weight', 
+                                  'RAC1P': 'RACE',
+                                  'JWTR' : 'COM_TYP', 
+                                  'JWMNP' : 'COM_TIME', 
+                                  'ESR': 'EMPLOY',}) 
     
     
     
@@ -95,22 +107,28 @@ class houses(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
+        
+               
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            url = 'https://www2.census.gov/programs-surveys/acs/data/pums/2017/5-Year/csv_hpa.zip'
+            r = requests.get(url)
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extract('psam_h42.csv' , path = tmpdirname)
+            df = pd.read_csv(z.open('psam_h42.csv'))
 
-        url = 'https://www2.census.gov/programs-surveys/acs/data/pums/2017/5-Year/csv_hpa.zip'
-        r = requests.get(url)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall()
-        df = pd.read_csv(z.open('psam_h42.csv'))
+        
         df =  (df.loc[df['PUMA']
                      .isin(pumas['puma_id'])])
+        
         df = df.loc[:, ['PUMA', 
                         'WGTP', 
                         'HINCP',
                         'GRNTP' ]
                    ]
+        
         return df.rename(columns={'PUMA': 'puma_id',
                                   'WGTP': 'house_weight', 
                                   'HINCP' : 'house_income', 
-                                  'GRNTP' : 'month_rent'}) 
+                                  'GRNTP' : 'month_rent',}) 
         
         
