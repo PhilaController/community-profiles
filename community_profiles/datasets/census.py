@@ -17,6 +17,7 @@ pumas['puma_id'] = pumas['puma_id'].astype(str).str[3:].astype(np.int64)
 __all__ = [
     "persons",
     "houses",
+    "ZPB",
 ]
 
         
@@ -130,5 +131,50 @@ class houses(Dataset):
                                   'WGTP': 'house_weight', 
                                   'HINCP' : 'house_income', 
                                   'GRNTP' : 'month_rent',}) 
+        
+        
+               
+        
+class ZPB(Dataset):
+    """
+    ZIP Codes Business Patterns (ZBP) 
+    Available: 2012 - 2016
+     
+    
+    Source
+    ------
+    https://www.census.gov/data/developers/data-sets/cbp-nonemp-zbp.html
+    """
+
+
+    @classmethod
+    def download(cls, **kwargs):
+        
+        
+        ZIPCodes = cp_data.ZIPCodes.get()
+        ZIPCodes = ','.join(ZIPCodes['zip_code'].astype(str))
+        
+        
+        site = 'https://api.census.gov/data/'
+        data = '/zbp' 
+        columns = 'EMP,ESTAB,EMPSZES,YEAR'
+        params = {'get': columns ,
+                  'for' : 'zipcode:' + ZIPCodes} 
+           
+        
+        df = [] 
+        year = np.arange(2012,2017)
+        for y in year: 
+            url = site + str(y) + data 
+            rr = requests.get(url , params = params ) 
+            df.append(pd.DataFrame(rr.json())) 
+            
+        return pd.concat(df)        
+        
+        
+        
+        
+        
+        
         
         
