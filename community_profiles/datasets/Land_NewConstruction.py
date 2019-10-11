@@ -1,4 +1,5 @@
 import carto2gpd
+import pandas as pd
 import geopandas as gpd
 from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
