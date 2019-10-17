@@ -1,52 +1,71 @@
 import esri2gpd
+import cenpy as cen
 import geopandas as gpd
+import os
 from . import EPSG
-from .core import Dataset
+from .core import Dataset, data_dir
 
-__all__ = ["Neighborhoods", "ZIPCodes", "CityLimits", "PUMAs"]
+__all__ = ["CensusTracts", "Neighborhoods", "ZIPCodes", "CityLimits", "PUMAs"]
+
+
+class CensusTracts(Dataset):
+    """
+    The boundary regions for census tracts in Philadelphia 
+    from the 2010 Census.
+    """
+
+    @classmethod
+    def get_path(cls, year=2017):
+        return os.path.join(data_dir, cls.__name__, str(year))
+
+    @classmethod
+    def download(cls, **kwargs):
+        """
+        Download the census tract boundaries
+        """
+        # Get the year
+        year = kwargs.get("year", 2017)
+
+        # Initialize the Tiger API
+        api = cen.tiger.TigerConnection(name=f"tigerWMS_ACS{year}")
+
+        return (
+            api.query(layer=8, where="STATE=42 AND COUNTY=101")
+            .loc[:, ["GEOID", "NAME", "geometry"]]
+            .rename(columns={"GEOID": "geo_id", "NAME": "geo_name"})
+            .sort_values("geo_id")
+            .reset_index(drop=True)
+            .to_crs(epsg=EPSG)
+        )
 
 
 class PUMAs(Dataset):
     """
     The boundary regions for the Public Use Microdata Areas (PUMAs) 
     in Philadelphia from the 2010 Census.
-
-    Source
-    ------
-    https://usa.ipums.org/usa/resources/volii/shapefiles/ipums_puma_2010.zip
     """
+
+    @classmethod
+    def get_path(cls, year=2017):
+        return os.path.join(data_dir, cls.__name__, str(year))
 
     @classmethod
     def download(cls, **kwargs):
         """
         Download the PUMA boundaries
         """
-        # Download the raw data (all regions)
-        url = "https://usa.ipums.org/usa/resources/volii/shapefiles/ipums_puma_2010.zip"
-        df = gpd.read_file(url)
+        # Get the year
+        year = kwargs.get("year", 2017)
 
-        # Specify the CRS explicitly
-        df.crs = {
-            "proj": "aea",
-            "lat_1": 29.5,
-            "lat_2": 45.5,
-            "lat_0": 37.5,
-            "lon_0": -96,
-            "x_0": 0,
-            "y_0": 0,
-            "datum": "NAD83",
-            "units": "m",
-            "no_defs": True,
-        }
-
-        # Trim to Philadelphia
-        in_philly = df.Name.str.contains("Philadelphia")
-        df = df.loc[in_philly]
-
-        # Return
         return (
-            df.loc[:, ["GEOID", "Name", "geometry"]]
-            .rename(columns={"GEOID": "puma_id", "Name": "puma_name"})
+            esri2gpd.get(
+                f"http://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS{year}/MapServer/0",
+                where="STATE=42 AND PUMA LIKE '%032%'",
+                fields=["GEOID", "NAME"],
+            )
+            .rename(columns={"GEOID": "geo_id", "NAME": "geo_name"})
+            .sort_values("geo_id")
+            .reset_index(drop=True)
             .to_crs(epsg=EPSG)
         )
 
