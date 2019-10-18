@@ -35,6 +35,22 @@ class WorkerClass(CensusDataset):
     
     @classmethod
     def process(cls, df):
+        
+        groups = [ 
+            "private_for_profit_wage_and_salary",
+            "employee_of_private_company",
+            "selfemployed_in_own_incorporated_business",
+            "private_not_for_profit_wage_and_salary",
+            "local_government",
+            "state_government",
+            "federal_government",
+            "selfemployed_in_own_not_incorporated_business",
+            "unpaid_family_workers",
+        ]
+        
+        for g in groups:
+            df[f"total_{g}"] = df[f"male_{g}"] + df[f"female_{g}"]
+
     
         return df
     
