@@ -9,4 +9,6 @@ from .income import MedianIncome
 from .housevalue import MedianHouseValue
 from .tenure import Tenure
 from .workerclass import WorkerClass
-from .poverty import Poverty 
+from .poverty import Poverty
+from .rentburden import RentBurden
+

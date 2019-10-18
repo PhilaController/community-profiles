@@ -1,15 +1,17 @@
-import numpy as np 
+import numpy as np
 import pandas as pd
 from .core import Dataset
 from .regions import *
 
 
-# load puma data to set indexes 
-pumas = PUMAs.get().sort_values('puma_id').set_index('puma_id')
+# load puma data to set indexes
+pumas = PUMAs.get().sort_values("geo_id").set_index("geo_id")
 
-def census_count(df, group2 = None, weight = 'person_weight', 
-                 normalize = False, total = None, drop = True):
-    
+
+def census_count(
+    df, group2=None, weight="person_weight", normalize=False, total=None, drop=True
+):
+
     """ Counts the total number of the given data in each PUMA / 
         Calculates percentage of the given data in each PUMA
     
@@ -42,36 +44,33 @@ def census_count(df, group2 = None, weight = 'person_weight',
         census_count : series or dataframe 
         
      """
-    
-    # Two columns to groupby 
-    # Returns pivot dataframe with with second group as columns 
-    
+
+    # Two columns to groupby
+    # Returns pivot dataframe with with second group as columns
+
     if group2 is not None:
-        group = df.groupby(['puma_id', group2])
-        census_count  = group[weight].sum().reset_index()
-        
-        census_count = census_count.pivot(index = 'puma_id',
-                                     columns = group2,
-                                     values = weight ).reset_index(drop = drop)
-        
+        group = df.groupby(["geo_id", group2])
+        census_count = group[weight].sum().reset_index()
+
+        census_count = census_count.pivot(
+            index="geo_id", columns=group2, values=weight
+        ).reset_index(drop=drop)
+
     # Groupby PUMA
-    # Returns series 
+    # Returns series
     else:
-        group = df.groupby(['puma_id'])
-        census_count = group[weight].sum().reset_index(drop = drop)
-        
-        
-    # Divide series or dataframe by total to return percentage 
+        group = df.groupby(["geo_id"])
+        census_count = group[weight].sum().reset_index(drop=drop)
+
+    # Divide series or dataframe by total to return percentage
     if normalize:
-        census_count = census_count.div(total, axis=0) * 100 
+        census_count = census_count.div(total, axis=0) * 100
 
-    return census_count  
-
-
+    return census_count
 
 
-def puma_count(df, group2 = None, normalize = False, total = None):
-    
+def puma_count(df, group2=None, normalize=False, total=None):
+
     """ Counts the total number of the given data in each PUMA / 
         Calculates percentage of the given data in each PUMA
         
@@ -99,27 +98,23 @@ def puma_count(df, group2 = None, normalize = False, total = None):
          """
 
     # Two columns to groupby
-    # Returns pivot dataframe with with second group as columns 
+    # Returns pivot dataframe with with second group as columns
     if group2 is not None:
-        group = df.groupby(['puma_id', group2])
-        puma_count  = group.size().reset_index()
-        
-        puma_count = puma_count.pivot(index = 'puma_id',
-                                     columns = group2,
-                                     values = 0 ).fillna(0)
+        group = df.groupby(["geo_id", group2])
+        puma_count = group.size().reset_index()
+
+        puma_count = puma_count.pivot(index="geo_id", columns=group2, values=0).fillna(
+            0
+        )
     # Groupby PUMA
-    # Returns series 
+    # Returns series
     else:
-        group = df.groupby(['puma_id'])
+        group = df.groupby(["geo_id"])
         puma_count = group.size().reindex(pumas.index).fillna(0)
-        
-    # Divide series or dataframe by total to return percentage 
+
+    # Divide series or dataframe by total to return percentage
     if normalize:
-        puma_count = puma_count.div(total) * 100 
-        
-        
-    return puma_count  
+        puma_count = puma_count.div(total) * 100
 
-
-
+    return puma_count
 
