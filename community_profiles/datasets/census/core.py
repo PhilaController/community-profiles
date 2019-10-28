@@ -36,6 +36,8 @@ class CensusDataset(Dataset):
         fresh : bool, optional
             a boolean keyword that specifies whether a fresh copy of the 
             dataset should be downloaded
+        level : str, optional
+            the geographic level to return; one of "puma", "tract", or "city"
         **kwargs : 
             Additional keywords are passed to the `get_path()` function and 
             the `download()` function
@@ -45,7 +47,7 @@ class CensusDataset(Dataset):
         data : DataFrame/GeoDataFrame
             the dataset as a pandas/geopandas object
         """
-        allowed_levels = ["puma", "tract"]
+        allowed_levels = ["puma", "tract", "city"]
         level = level.lower()
         if level not in allowed_levels:
             raise ValueError(f"Allowed values for 'level' are: {allowed_levels}")
@@ -61,17 +63,20 @@ class CensusDataset(Dataset):
 
         Parameters
         ----------
-        variables : list of str
-            the names of the census variables to download
+        level : str
+            the geographic level to return; one of "puma", "tract", or "city"
         year : int, optional
             the year of data to download
         """
         if level == "puma":
             boundaries = PUMAs.get(year=year)
             geo_unit = "public use microdata area"
-        else:
+        elif level == "tract":
             boundaries = CensusTracts.get(year=year)
             geo_unit = "tract"
+        else:
+            geo_unit = "place"
+            boundaries = None
 
         # initialize the API
         api = cen.remote.APIConnection(f"ACSDT5Y{year}")
@@ -83,9 +88,17 @@ class CensusDataset(Dataset):
         }
 
         # Query the census API to get the raw data
-        df = api.query(
-            cols=list(variables), geo_unit=f"{geo_unit}:*", geo_filter={"state": "42"}
-        )
+        if level == "city":
+            # Get data for Philadelphia county
+            df = api.query(
+                cols=list(variables), geo_unit="county:101", geo_filter={"state": "42"}
+            )
+        else:
+            df = api.query(
+                cols=list(variables),
+                geo_unit=f"{geo_unit}:*",
+                geo_filter={"state": "42"},
+            )
 
         # Create the ID column and remove unnecessary columns
         if level == "puma":
@@ -93,17 +106,20 @@ class CensusDataset(Dataset):
                 lambda row: row["state"] + row["public use microdata area"], axis=1
             )
             df = df.drop(labels=["state", "public use microdata area"], axis=1)
-        else:
+        elif level == "tract":
             df["geo_id"] = df.apply(
                 lambda row: row["state"] + row["county"] + row["tract"], axis=1
             )
             df = df.drop(labels=["state", "county", "tract"], axis=1)
 
-        # set the boundary ID as a string
-        boundaries["geo_id"] = boundaries["geo_id"].astype(str)
+        if level != "city":
+            # set the boundary ID as a string
+            boundaries["geo_id"] = boundaries["geo_id"].astype(str)
 
-        # Merge the data with the boundaries
-        df = boundaries.merge(df, on="geo_id")
+            # Merge the data with the boundaries
+            df = boundaries.merge(df, on="geo_id")
+        else:
+            df = df.drop(labels=["state", "county"], axis=1)
 
         # Convert columns from strings to numbers
         for col in variables:
