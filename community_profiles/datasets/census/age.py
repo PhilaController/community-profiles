@@ -64,7 +64,6 @@ class Age(CensusDataset):
 
     @classmethod
     def process(cls, df):
-
         # Calculate totals for both genders together
         groups = [
             "under_5",
@@ -125,6 +124,23 @@ class Age(CensusDataset):
             df[f"total_{groupset}"] = df[[f"total_{f}" for f in group_list]].sum(axis=1)
             df[f"male_{groupset}"] = df[[f"male_{f}" for f in group_list]].sum(axis=1)
             df[f"female_{groupset}"] = df[[f"female_{f}" for f in group_list]].sum(
+                axis=1
+            )
+            
+            
+        # Calculate custom group sets by generation type 
+        generations = collections.OrderedDict( {
+            "silent": ["75_to_79", "80_to_84", "85_and_over"], 
+            "boomers": ["55_to_59", "60_to_61", "62_to_64", "65_to_66", "67_to_69", "70_to_74"], 
+            "gen_x": ["40_to_44", "45_to_49","50_to_54" ],
+            "millennials": ["22_to_24","25_to_29", "30_to_34","35_to_39"], 
+            "gen_z": ["under_5", "5_to_9", "10_to_14", "15_to_17", "18_to_19", "20", "21",],
+            }
+        ) 
+        for generation , group_list in generations.items():
+            df[f"total_{generation}"] = df[[f"total_{f}" for f in group_list]].sum(axis=1)
+            df[f"male_{generation}"] = df[[f"male_{f}" for f in group_list]].sum(axis=1)
+            df[f"female_{generation}"] = df[[f"female_{f}" for f in group_list]].sum(
                 axis=1
             )
 
