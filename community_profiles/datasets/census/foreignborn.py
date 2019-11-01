@@ -10,6 +10,7 @@ class ForeignBorn(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Total population"
     TABLE_NAME = "B05002"
     RAW_FIELDS = {"001": "universe", "002": "native", "013": "foreign_born"}
 

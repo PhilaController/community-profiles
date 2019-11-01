@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -6,15 +7,12 @@ class HouseholdLanguage(CensusDataset):
     """
     Household language by household limited English speaking status.
 
-    Note
-    ----
-    Includes all households
-
     Source
     ------
     American Community Survey
     """
 
+    UNIVERSE = "Total Population"
     TABLE_NAME = "B05002"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -45,13 +43,22 @@ class HouseholdLanguage(CensusDataset):
             "asian_and_pacific_islander",
             "other",
         ]
-        # English vs. no English totals
-        df["total_not_limited_english"] = df["only_english"] + df[
-            [f"{l}_not_limited_english" for l in languages]
-        ].sum(axis=1)
-        df["total_limited_english"] = df[
-            [f"{l}_limited_english" for l in languages]
-        ].sum(axis=1)
+
+        # not limited English
+        newcol = "total_not_limited_english"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_sum,
+            cols=["only_english"] + [f"{l}_not_limited_english" for l in languages],
+            axis=1,
+        )
+
+        # limited English
+        newcol = "total_limited_english"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_sum,
+            cols=[f"{l}_limited_english" for l in languages],
+            axis=1,
+        )
 
         return df
 

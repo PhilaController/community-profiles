@@ -10,6 +10,7 @@ class GiniIncomeInequality(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Households"
     TABLE_NAME = "B19083"
     RAW_FIELDS = {"001": "gini_index"}
 

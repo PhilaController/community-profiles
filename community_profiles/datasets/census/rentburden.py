@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -11,6 +12,7 @@ class RentBurden(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Renter-occupied housing units"
     TABLE_NAME = "B25070"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -31,9 +33,16 @@ class RentBurden(CensusDataset):
     def process(cls, df):
 
         # More than 35% is defined as rent burdened
-        cols = ["35_to_40", "40_to_50", "more_than_50"]
-        df["more_than_35"] = df[cols].sum(axis=1)
-        df["percent_more_than_35"] = df["more_than_35"] / df["universe"]
+        newcol = "more_than_35"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_sum, cols=["35_to_40", "40_to_50", "more_than_50"], axis=1
+        )
+
+        # As a percent
+        newcol = "percent_more_than_35"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_ratio, cols=["more_than_35", "universe"], axis=1
+        )
 
         return df
 

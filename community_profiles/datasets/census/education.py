@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -15,6 +16,7 @@ class EducationalAttainment(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Population 25 years and over"
     TABLE_NAME = "B15002"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -79,7 +81,10 @@ class EducationalAttainment(CensusDataset):
             "doctorate_degree",
         ]
         for g in groups:
-            df[f"total_{g}"] = df[f"male_{g}"] + df[f"female_{g}"]
+            cols = [f"{tag}_{g}" for tag in ["male", "female"]]
+            df[[f"total_{g}", f"total_{g}_moe"]] = df.apply(
+                agg.approximate_sum, cols=cols, axis=1
+            )
 
         # Calculate our custom groups
         groupsets = collections.OrderedDict(
@@ -109,11 +114,11 @@ class EducationalAttainment(CensusDataset):
             }
         )
         for groupset, group_list in groupsets.items():
-            df[f"total_{groupset}"] = df[[f"total_{f}" for f in group_list]].sum(axis=1)
-            df[f"male_{groupset}"] = df[[f"male_{f}" for f in group_list]].sum(axis=1)
-            df[f"female_{groupset}"] = df[[f"female_{f}" for f in group_list]].sum(
-                axis=1
-            )
+            for tag in ["total", "male", "female"]:
+                cols = [f"{tag}_{f}" for f in group_list]
+                df[[f"{tag}_{groupset}", f"{tag}_{groupset}_moe"]] = df.apply(
+                    agg.approximate_sum, cols=cols, axis=1
+                )
 
         # Pass it back
         return df

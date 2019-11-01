@@ -68,12 +68,15 @@ class CensusDataset(Dataset):
         year : int, optional
             the year of data to download
         """
+        # Return data by PUMA
         if level == "puma":
             boundaries = PUMAs.get(year=year)
             geo_unit = "public use microdata area"
+        # Return data by tract
         elif level == "tract":
             boundaries = CensusTracts.get(year=year)
             geo_unit = "tract"
+        # Return data citywide
         else:
             geo_unit = "place"
             boundaries = None
@@ -82,10 +85,11 @@ class CensusDataset(Dataset):
         api = cen.remote.APIConnection(f"ACSDT5Y{year}")
 
         # Format the variable names properly
-        variables = {
-            f"{cls.TABLE_NAME}_{field}E": renamed
-            for field, renamed in cls.RAW_FIELDS.items()
-        }
+        variables = {}
+        for field, renamed in cls.RAW_FIELDS.items():
+            old_name = f"{cls.TABLE_NAME}_{field}"
+            variables[f"{old_name}E"] = renamed  # estimate
+            variables[f"{old_name}M"] = f"{renamed}_moe"  # margin of error
 
         # Query the census API to get the raw data
         if level == "city":

@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -11,6 +12,7 @@ class EmploymentStatus(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Population 16 years and over"
     TABLE_NAME = "B23025"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -28,7 +30,12 @@ class EmploymentStatus(CensusDataset):
     def process(cls, df):
 
         # Unemployment rate
-        df["unemployment_rate"] = df["civilian_unemployed"] / df["in_labor_force"]
+        newcol = "unemployment_rate"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_ratio,
+            cols=["civilian_unemployed", "in_labor_force"],
+            axis=1,
+        )
 
         return df
 

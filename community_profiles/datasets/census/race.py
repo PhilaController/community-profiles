@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -11,6 +12,7 @@ class Race(CensusDataset):
     American Community Survey
     """
 
+    UNIVERSE = "Total Population"
     TABLE_NAME = "B03002"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -30,13 +32,17 @@ class Race(CensusDataset):
     def process(cls, df):
 
         # add a more general other category
-        cols = [
-            "american_indian_and_alaska_native",
-            "native_hawaiian_and_pacific_islander",
-            "other_alone",
-            "two_or_more_races",
-        ]
-        df["all_other_alone"] = df[cols].sum(axis=1)
+        newcol = "all_other_alone"
+        df[[newcol, f"{newcol}_moe"]] = df.apply(
+            agg.approximate_sum,
+            cols=[
+                "american_indian_and_alaska_native",
+                "native_hawaiian_and_pacific_islander",
+                "other_alone",
+                "two_or_more_races",
+            ],
+            axis=1,
+        )
 
         return df
 

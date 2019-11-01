@@ -3,14 +3,9 @@ from .core import CensusDataset
 
 class MedianHouseValue(CensusDataset):
     """
-    Median houseing value.
+    Median housing value.
     """
 
-    TABLE_NAME = 'B25077'
-    RAW_FIELDS = { "001": "median"}
-
-    
-    @classmethod
-    def process(cls, df):
-    
-        return df
+    UNIVERSE = "Owner-occupied housing units"
+    TABLE_NAME = "B25077"
+    RAW_FIELDS = {"001": "median"}

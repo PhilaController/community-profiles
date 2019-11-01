@@ -1,4 +1,5 @@
 from .core import CensusDataset
+from . import agg
 import collections
 
 
@@ -7,6 +8,7 @@ class Age(CensusDataset):
     Population by sex and age.
     """
 
+    UNIVERSE = "Total Population"
     TABLE_NAME = "B01001"
     RAW_FIELDS = collections.OrderedDict(
         {
@@ -91,7 +93,10 @@ class Age(CensusDataset):
             "85_and_over",
         ]
         for g in groups:
-            df[f"total_{g}"] = df[f"male_{g}"] + df[f"female_{g}"]
+            cols = [f"{tag}_{g}" for tag in ["male", "female"]]
+            df[[f"total_{g}", f"total_{g}_moe"]] = df.apply(
+                agg.approximate_sum, cols=cols, axis=1
+            )
 
         # Calculate custom group sets
         groupsets = collections.OrderedDict(
@@ -120,28 +125,44 @@ class Age(CensusDataset):
                 ],
             }
         )
+
         for groupset, group_list in groupsets.items():
-            df[f"total_{groupset}"] = df[[f"total_{f}" for f in group_list]].sum(axis=1)
-            df[f"male_{groupset}"] = df[[f"male_{f}" for f in group_list]].sum(axis=1)
-            df[f"female_{groupset}"] = df[[f"female_{f}" for f in group_list]].sum(
-                axis=1
-            )
-            
-            
-        # Calculate custom group sets by generation type 
-        generations = collections.OrderedDict( {
-            "silent": ["75_to_79", "80_to_84", "85_and_over"], 
-            "boomers": ["55_to_59", "60_to_61", "62_to_64", "65_to_66", "67_to_69", "70_to_74"], 
-            "gen_x": ["40_to_44", "45_to_49","50_to_54" ],
-            "millennials": ["22_to_24","25_to_29", "30_to_34","35_to_39"], 
-            "gen_z": ["under_5", "5_to_9", "10_to_14", "15_to_17", "18_to_19", "20", "21",],
+            for tag in ["total", "male", "female"]:
+                cols = [f"{tag}_{f}" for f in group_list]
+                df[[f"{tag}_{groupset}", f"{tag}_{groupset}_moe"]] = df.apply(
+                    agg.approximate_sum, cols=cols, axis=1
+                )
+
+        # Calculate custom group sets by generation type
+        generations = collections.OrderedDict(
+            {
+                "silent": ["75_to_79", "80_to_84", "85_and_over"],
+                "boomers": [
+                    "55_to_59",
+                    "60_to_61",
+                    "62_to_64",
+                    "65_to_66",
+                    "67_to_69",
+                    "70_to_74",
+                ],
+                "gen_x": ["40_to_44", "45_to_49", "50_to_54"],
+                "millennials": ["22_to_24", "25_to_29", "30_to_34", "35_to_39"],
+                "gen_z": [
+                    "under_5",
+                    "5_to_9",
+                    "10_to_14",
+                    "15_to_17",
+                    "18_to_19",
+                    "20",
+                    "21",
+                ],
             }
-        ) 
-        for generation , group_list in generations.items():
-            df[f"total_{generation}"] = df[[f"total_{f}" for f in group_list]].sum(axis=1)
-            df[f"male_{generation}"] = df[[f"male_{f}" for f in group_list]].sum(axis=1)
-            df[f"female_{generation}"] = df[[f"female_{f}" for f in group_list]].sum(
-                axis=1
-            )
+        )
+        for groupset, group_list in generations.items():
+            for tag in ["total", "male", "female"]:
+                cols = [f"{tag}_{f}" for f in group_list]
+                df[[f"{tag}_{groupset}", f"{tag}_{groupset}_moe"]] = df.apply(
+                    agg.approximate_sum, cols=cols, axis=1
+                )
 
         return df
