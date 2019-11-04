@@ -5,6 +5,8 @@ import os, json
 from . import EPSG
 from .. import data_dir
 
+REGISTRY = {}
+
 
 class Dataset(ABC):
     """
@@ -21,6 +23,14 @@ class Dataset(ABC):
     """
 
     date_columns = []
+
+    def __init_subclass__(cls, **kwargs):
+        """
+        Register subclasses of this class in the `REGISTRY` dict.
+        """
+        if cls not in REGISTRY:
+            REGISTRY[cls.__name__] = cls
+        super().__init_subclass__(**kwargs)
 
     @classmethod
     def _format_data(cls, data):
