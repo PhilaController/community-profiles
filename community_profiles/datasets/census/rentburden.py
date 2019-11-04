@@ -2,17 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["RentBurden"]
+
 
 class RentBurden(CensusDataset):
     """
     Gross rent as a percentage of household income in the past 12 months.
-
-    Source
-    ------
-    American Community Survey
     """
 
-    UNIVERSE = "Renter-occupied housing units"
+    UNIVERSE = "renter-occupied housing units"
     TABLE_NAME = "B25070"
     RAW_FIELDS = collections.OrderedDict(
         {

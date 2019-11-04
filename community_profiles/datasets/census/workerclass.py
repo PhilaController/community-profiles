@@ -2,13 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["WorkerClass"]
+
 
 class WorkerClass(CensusDataset):
     """
     Sex by Class of Worker for the Civilian Employed Population 16 Years and Over.
     """
 
-    UNIVERSE = "Civilian Employed Population 16 Years and Over"
+    UNIVERSE = "civilian employed population 16 years and over"
     TABLE_NAME = "B24080"
     RAW_FIELDS = collections.OrderedDict(
         {

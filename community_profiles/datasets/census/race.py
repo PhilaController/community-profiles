@@ -2,17 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["Race"]
+
 
 class Race(CensusDataset):
     """
-    Demographic race data.
-
-    Source
-    ------
-    American Community Survey
+    Hispanic or latino origin by race.
     """
 
-    UNIVERSE = "Total Population"
+    UNIVERSE = "total population"
     TABLE_NAME = "B03002"
     RAW_FIELDS = collections.OrderedDict(
         {

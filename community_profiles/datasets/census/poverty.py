@@ -1,17 +1,15 @@
 from .core import CensusDataset
 import collections
 
+__all__ = ["PovertyStatus"]
 
-class Poverty(CensusDataset):
+
+class PovertyStatus(CensusDataset):
     """
-    Poverty in terms of 12 month income below poverty level.   
-    
-    Source
-    ------
-    American Community Survey
+    Poverty in terms of 12 month income below/above poverty level.
     """
 
-    UNIVERSE = "Population for whom poverty status is determined"
+    UNIVERSE = "population for whom poverty status is determined"
     TABLE_NAME = "B17001"
     RAW_FIELDS = collections.OrderedDict(
         {

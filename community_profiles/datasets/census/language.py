@@ -2,18 +2,17 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["HouseholdLanguage"]
+
 
 class HouseholdLanguage(CensusDataset):
     """
     Household language by household limited English speaking status.
-
-    Source
-    ------
-    American Community Survey
     """
 
-    UNIVERSE = "Total Population"
-    TABLE_NAME = "B05002"
+    UNIVERSE = "households"
+    TABLE_NAME = "C16002"
+    YEARS = [2017, 2016]
     RAW_FIELDS = collections.OrderedDict(
         {
             "001": "universe",

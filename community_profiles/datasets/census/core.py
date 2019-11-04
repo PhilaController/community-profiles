@@ -4,11 +4,23 @@ import cenpy as cen
 import os
 import pandas as pd
 
+CENSUS_REGISTRY = {}
+
 
 class CensusDataset(Dataset):
     """
     A base class to represent a dataset downloaded from the Census API.
     """
+
+    YEARS = [2017, 2016, 2015, 2014, 2013, 2012]
+
+    def __init_subclass__(cls, **kwargs):
+        """
+        Register subclasses of this class in the `REGISTRY` dict.
+        """
+        if cls not in CENSUS_REGISTRY:
+            CENSUS_REGISTRY[cls.__name__] = cls
+        super().__init_subclass__(**kwargs)
 
     @classmethod
     def process(cls, df):

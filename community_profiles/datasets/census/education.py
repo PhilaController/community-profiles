@@ -2,21 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["EducationalAttainment"]
+
 
 class EducationalAttainment(CensusDataset):
     """
-    Educational attainment data.
-
-    Note
-    ----
-    The data includes populations 25 years or older only.
-
-    Source
-    ------
-    American Community Survey
+    Sex by educational attainment for the population 25 years and over.
     """
 
-    UNIVERSE = "Population 25 years and over"
+    UNIVERSE = "population 25 years and over"
     TABLE_NAME = "B15002"
     RAW_FIELDS = collections.OrderedDict(
         {

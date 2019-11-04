@@ -1,16 +1,14 @@
 from .core import CensusDataset
 
+__all__ = ["Population"]
 
-class TotalPopulation(CensusDataset):
+
+class Population(CensusDataset):
     """
-    Total population
-
-    Source
-    ------
-    American Community Survey
+    Total population.
     """
 
-    UNIVERSE = "Total Population"
+    UNIVERSE = "total population"
     TABLE_NAME = "B01003"
     RAW_FIELDS = {"001": "total_population"}
 

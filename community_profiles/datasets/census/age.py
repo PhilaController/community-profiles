@@ -2,13 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["Age"]
+
 
 class Age(CensusDataset):
     """
     Population by sex and age.
     """
 
-    UNIVERSE = "Total Population"
+    UNIVERSE = "total population"
     TABLE_NAME = "B01001"
     RAW_FIELDS = collections.OrderedDict(
         {

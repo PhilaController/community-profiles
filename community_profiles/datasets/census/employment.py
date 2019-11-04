@@ -2,17 +2,15 @@ from .core import CensusDataset
 from . import agg
 import collections
 
+__all__ = ["EmploymentStatus"]
+
 
 class EmploymentStatus(CensusDataset):
     """
     Employment status for the population 16 years and older.
-
-    Source
-    ------
-    American Community Survey
     """
 
-    UNIVERSE = "Population 16 years and over"
+    UNIVERSE = "population 16 years and over"
     TABLE_NAME = "B23025"
     RAW_FIELDS = collections.OrderedDict(
         {

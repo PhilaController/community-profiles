@@ -1,40 +1,28 @@
-from .age import Age
-from .pop import TotalPopulation
-from .foreignborn import ForeignBorn
-from .race import Race
-from .education import EducationalAttainment
-from .language import HouseholdLanguage
-from .employment import EmploymentStatus
-from .income import MedianIncome
-from .housevalue import MedianHouseValue
-from .tenure import Tenure
-from .workerclass import WorkerClass
-from .poverty import Poverty
-from .rentburden import RentBurden
-from .gini import GiniIncomeInequality
+from .core import CENSUS_REGISTRY
+from .age import *
+from .ancestry import *
+from .education import *
+from .employment import *
+from .foreignborn import *
+from .gini import *
+from .householdincome import *
+from .housing import *
+from .language import *
+from .medianage import *
+from .medianhouseholdincome import *
+from .mobility import *
+from .percapitaincome import *
+from .population import *
+from .poverty import *
+from .race import *
+from .rentburden import *
 
-__all__ = [
-    "Age",
-    "TotalPopulation",
-    "ForeignBorn",
-    "Race",
-    "EducationalAttainment",
-    "HouseholdLanguage",
-    "EmploymentStatus",
-    "MedianIncome",
-    "MedianHouseValue",
-    "Tenure",
-    "WorkerClass",
-    "Poverty",
-    "RentBurden",
-    "GiniIncomeInequality",
-]
+__all__ = sorted(CENSUS_REGISTRY)
 
 
 def available_census_datasets():
     """
     Return a list of the names of the available census classes.
     """
-    mod = globals()
-    return [mod[cls] for cls in __all__]
+    return [CENSUS_REGISTRY[cls] for cls in sorted(CENSUS_REGISTRY)]
 
