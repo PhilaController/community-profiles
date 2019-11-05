@@ -16,6 +16,7 @@ from .population import *
 from .poverty import *
 from .race import *
 from .rentburden import *
+from .analysis import *
 
 __all__ = sorted(CENSUS_REGISTRY)
 
