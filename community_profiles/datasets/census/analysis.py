@@ -1,6 +1,7 @@
 import numpy as np
 import census_data_aggregator as cda
 import geopandas as gpd
+import pandas as pd
 
 __all__ = ["calculate_cv", "aggregate_count_data"]
 
@@ -35,7 +36,7 @@ def calculate_cv(df):
     return out
 
 
-def aggregate_count_data(df):
+def aggregate_count_data(df, by):
     """
     Aggregate all columns in the input data frame, assuming
     the data is "count" data that can be summed.
@@ -49,6 +50,8 @@ def aggregate_count_data(df):
     ----------
     df : GeoDataFrame
         the input data to aggregate
+    by : str
+        the name of the column that specifies the aggregation groups
     
     Returns
     -------
@@ -56,14 +59,29 @@ def aggregate_count_data(df):
         the output data with aggregated data and margin of error columns, 
         and the aggregated geometry polygon 
     """
+    # Make sure we have the column we are grouping by
+    if by not in df.columns:
+        raise ValueError(
+            f"the specified column to group by '{by}' is not in the input data"
+        )
 
-    cols = [col for col in df.columns if f"{col}_moe" in df.columns]
-    out = {}
-    for col in cols:
-        aggval, moe = cda.approximate_sum(*df[[col, f"{col}_moe"]].values)
-        out[col] = aggval
-        out[f"{col}_moe"] = moe
+    def _aggregate(group_df):
+        """
+        The function that aggregates each group
+        """
+        cols = [col for col in group_df.columns if f"{col}_moe" in group_df.columns]
+        out = {}
+        for col in cols:
+            aggval, moe = cda.approximate_sum(*group_df[[col, f"{col}_moe"]].values)
+            out[col] = aggval
+            out[f"{col}_moe"] = moe
 
-    out["geometry"] = df.geometry.unary_union
-    return gpd.GeoDataFrame(out, index=[0], geometry="geometry", crs=df.crs)
+        out["geometry"] = group_df.geometry.unary_union
+        return pd.Series(out)
+
+    # this is the aggregated data, with index of "by", e.g., group label
+    agg_df = df.groupby(by).apply(_aggregate)
+
+    # Return a GeoDataFrame
+    return gpd.GeoDataFrame(agg_df, geometry="geometry", crs=df.crs)
 
