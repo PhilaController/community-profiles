@@ -1,5 +1,6 @@
 from .core import CensusDataset
 import collections
+import numpy as np
 
 __all__ = ["HouseholdIncome"]
 
@@ -32,4 +33,22 @@ class HouseholdIncome(CensusDataset):
             "017": "200000_or_more",
         }
     )
+
+    @classmethod
+    def get_aggregation_bins(cls):
+        """
+        """
+
+        bins = []
+        for i in range(3, 18):
+            column = cls.RAW_FIELDS[f"{i:03d}"]
+            if column.endswith("or_more"):
+                start = float(column.split("_")[0])
+                end = np.inf
+            else:
+                start, end = map(float, column.split("_to_"))
+
+            bins.append((start, end, column))
+
+        return bins
 
