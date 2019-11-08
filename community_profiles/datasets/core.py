@@ -63,9 +63,9 @@ class Dataset(ABC):
         """
         Dictionary of meta-data related to the dataset.
         """
-        path = os.path.join(data_dir, cls.__name__, "meta.json")
-        if os.path.exists(path):
-            return json.load(open(path, "r"))
+        path = data_dir / cls.__name__ / "meta.json"
+        if path.exists():
+            return json.load(path.open(mode="r"))
         else:
             return {}
 
@@ -81,7 +81,7 @@ class Dataset(ABC):
         """
         Return the directory path holding the data.
         """
-        return os.path.join(data_dir, cls.__name__)
+        return data_dir / cls.__name__
 
     @classmethod
     def get(cls, fresh=False, **kwargs):

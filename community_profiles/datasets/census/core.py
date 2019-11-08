@@ -31,7 +31,7 @@ class CensusDataset(Dataset):
 
     @classmethod
     def get_path(cls, level="puma", year=2017):
-        return os.path.join(data_dir, cls.__name__, level, str(year))
+        return data_dir / cls.__name__ / level / str(year)
 
     @classmethod
     def download(cls, level="puma", **kwargs):

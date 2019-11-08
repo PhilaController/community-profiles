@@ -35,7 +35,7 @@ class CensusTracts(Dataset):
 
     @classmethod
     def get_path(cls, year=2017):
-        return os.path.join(data_dir, cls.__name__, str(year))
+        return data_dir / cls.__name__ / str(year)
 
     @classmethod
     def download(cls, **kwargs):
@@ -66,7 +66,7 @@ class PUMAs(Dataset):
 
     @classmethod
     def get_path(cls, year=2017):
-        return os.path.join(data_dir, cls.__name__, str(year))
+        return data_dir / cls.__name__ / str(year)
 
     @classmethod
     def download(cls, **kwargs):
