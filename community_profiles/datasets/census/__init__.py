@@ -13,7 +13,6 @@ from .medianage import *
 from .medianearnings import *
 from .medianhouseholdincome import *
 from .mobility import *
-from .percapitaincome import *
 from .population import *
 from .poverty import *
 from .race import *
