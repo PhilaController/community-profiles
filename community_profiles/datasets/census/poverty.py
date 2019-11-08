@@ -1,7 +1,7 @@
 from .core import CensusDataset
 import collections
 
-__all__ = ["PovertyStatus"]
+__all__ = ["PovertyStatus", "PovertyBySex"]
 
 
 class PovertyStatus(CensusDataset):
@@ -19,3 +19,19 @@ class PovertyStatus(CensusDataset):
         }
     )
 
+class PovertyBySex(CensusDataset):
+    """ 
+    Poverty status by gender.
+    """
+    
+    UNIVERSE = "population for whom poverty status is determined"
+    TABLE_NAME = "B17001"
+    RAW_FIELDS = collections.OrderedDict(
+        { 
+            "001": "total",
+            "002": "total_below_poverty_level",
+            "003": "male_below_poverty_level",
+            "017": "female_below_poverty_level",    
+        }
+    ) 
+    
