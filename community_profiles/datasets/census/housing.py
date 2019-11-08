@@ -1,6 +1,6 @@
 from .core import CensusDataset
 import collections
-import numpy as np 
+import numpy as np
 
 __all__ = [
     "HousingValue",
@@ -49,7 +49,7 @@ class HousingValue(CensusDataset):
             "027": "2000000_or_more",
         }
     )
-    
+
     @classmethod
     def get_aggregation_bins(cls):
         """
@@ -69,11 +69,6 @@ class HousingValue(CensusDataset):
         return bins
 
 
-    
-    
-    
-    
-    
 class MedianHousingValue(CensusDataset):
     """
     Median housing value.
@@ -120,6 +115,24 @@ class GrossRent(CensusDataset):
             "026": "3500_or_more",
         }
     )
+
+    @classmethod
+    def get_aggregation_bins(cls):
+        """
+        """
+
+        bins = []
+        for i in range(3, 27):
+            column = cls.RAW_FIELDS[f"{i:03d}"]
+            if column.endswith("or_more"):
+                start = float(column.split("_")[0])
+                end = np.inf
+            else:
+                start, end = map(float, column.split("_to_"))
+
+            bins.append((start, end, column))
+
+        return bins
 
 
 class MedianGrossRent(CensusDataset):

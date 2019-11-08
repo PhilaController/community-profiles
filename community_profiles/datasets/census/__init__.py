@@ -1,6 +1,7 @@
 from .core import CENSUS_REGISTRY
 from .age import *
 from .ancestry import *
+from .earnings import *
 from .education import *
 from .employment import *
 from .foreignborn import *
@@ -9,6 +10,7 @@ from .householdincome import *
 from .housing import *
 from .language import *
 from .medianage import *
+from .medianearnings import *
 from .medianhouseholdincome import *
 from .mobility import *
 from .percapitaincome import *

@@ -5,7 +5,26 @@ import os
 from . import EPSG
 from .core import Dataset, data_dir
 
-__all__ = ["CensusTracts", "Neighborhoods", "ZIPCodes", "CityLimits", "PUMAs"]
+__all__ = [
+    "PlanningDistricts",
+    "CensusTracts",
+    "Neighborhoods",
+    "ZIPCodes",
+    "CityLimits",
+    "PUMAs",
+]
+
+
+class PlanningDistricts(Dataset):
+    """
+    Planning districts in the city of Philadelphia
+    """
+
+    @classmethod
+    def download(cls, **kwargs):
+
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Planning_Districts/FeatureServer/0"
+        return esri2gpd.get(url).to_crs(epsg=EPSG)
 
 
 class CensusTracts(Dataset):
