@@ -9,6 +9,7 @@ from .gini import *
 from .householdincome import *
 from .housing import *
 from .language import *
+from .localjobs import *
 from .medianage import *
 from .medianearnings import *
 from .medianhouseholdincome import *
