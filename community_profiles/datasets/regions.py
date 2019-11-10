@@ -45,12 +45,12 @@ class CensusTracts(Dataset):
         # Get the year
         year = kwargs.get("year", 2017)
 
-        # Initialize the Tiger API
-        api = cen.tiger.TigerConnection(name=f"tigerWMS_ACS{year}")
-
         return (
-            api.query(layer=8, where="STATE=42 AND COUNTY=101")
-            .loc[:, ["GEOID", "NAME", "geometry"]]
+            esri2gpd.get(
+                f"http://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS{year}/MapServer/8",
+                where="STATE=42 AND COUNTY=101",
+                fields=["GEOID", "NAME"],
+            )
             .rename(columns={"GEOID": "geo_id", "NAME": "geo_name"})
             .sort_values("geo_id")
             .reset_index(drop=True)
