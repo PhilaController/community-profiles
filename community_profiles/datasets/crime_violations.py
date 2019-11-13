@@ -10,7 +10,8 @@ __all__ = [
     "Shootings",
     "ParkingViolations",
     "StreetCodeViolations",
-    "LIViolations",
+    "LIViolations", 
+    "LIrequests",
 ]
 
 
@@ -178,13 +179,12 @@ class LIViolations(Dataset):
     ------
     https://www.opendataphilly.org/dataset/licenses-and-inspections-violations
     """
-
     date_columns = ["violationdate"]
 
     @classmethod
     def download(cls, **kwargs):
         url = "https://phl.carto.com/api/v2/sql"
-        where = "extract(year from violationdate) = 2017"
+        where = "extract(year from violationdate) = 2018"
         gdf = carto2gpd.get(url, "li_violations", where=where)
 
         return (
@@ -201,3 +201,41 @@ class LIViolations(Dataset):
             .reset_index(drop=True)
         )
 
+
+    
+    
+class LIrequests(Dataset):
+    """
+    Service requests that were entered via 311 
+    Available: 2007-present, Updated Daily 
+    Selected: 2017 
+    
+    Source
+    ------
+    https://www.opendataphilly.org/dataset/licenses-and-inspections-violations
+    """
+    
+    date_columns = ["sr_calldate"]
+
+    @classmethod
+    def download(cls, **kwargs):
+        url = "https://phl.carto.com/api/v2/sql"
+        where = "extract(year from sr_calldate) = 2018"
+        gdf = carto2gpd.get(url, "li_serv_req", where=where)
+
+        return (
+            replace_missing_geometries(gdf)
+            .to_crs(epsg=EPSG)
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+            .assign(
+                sr_calldate =lambda df: pd.to_datetime(df.sr_calldate),
+                year=lambda df: df.sr_calldate.dt.year,
+            )
+            .sort_values("sr_calldate", ascending=False)
+            .reset_index(drop=True)
+        )
+
+    
+   
