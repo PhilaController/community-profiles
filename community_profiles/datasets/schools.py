@@ -15,6 +15,7 @@ __all__ = [
     "Schools",
     "SchoolScores",
     "SchoolSurvey",
+    "GraduationRate",
 ]
 
     
@@ -168,6 +169,7 @@ class SchoolSurvey(Dataset):
             r = requests.get(url)
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path = tmpdirname)
+        
             
             df_p = pd.read_excel(z.open('2017-2018 Parent School Level.xlsx'), sheet_name='1718 Parent')
             df_s = pd.read_excel(z.open('2017-2018 Student School Level.xlsx'), sheet_name='1718 Student')
@@ -212,6 +214,35 @@ class SchoolSurvey(Dataset):
                     
 
         return pd.concat([df1,df2, df3]) 
+    
+    
+class GraduationRate(Dataset):
+    """
+    Developed in 2019 for the 2017-2018 counts and percentages of students who have graduated in four years 
+    and in six years by school. 
+    
+    Divided into ELL status, IEP status, Economically Disadvantaged Status, Grade and Ethnicity. 
+    
+    Students are attributed to the last school they attend in the four- or six-year window, which ends on September 30 of 
+    their expected graduation year. 
+    
+    Note: Doas not include Charter Schools.
+
+    Source
+    ------
+    https://www.philasd.org/performance/programsservices/open-data/school-performance/#school_graduation_rates
+   
+    """
+    
+    @classmethod
+    def download(cls, **kwargs):
+
+        url = ("https://cdn.philasd.org/offices/performance/Open_Data/School_Performance/Graduation_Rates/"
+               "FT9%20SY2014-15%20Grad%20Rates%20Suppressed.csv") 
+        
+        df = pd.read_csv(url)
+
+        return df    
     
 
     
