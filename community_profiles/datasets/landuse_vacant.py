@@ -5,9 +5,9 @@ from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
 import community_profiles.datasets as cp_data
+import esri2gpd
 
-
-__all__ = ["LandUse", "NewConstruction", "DissolvedLandUse"]
+__all__ = ["LandUse", "DissolvedLandUse", "VacantLand", "VacantBuilding"]
 
 
 class LandUse(Dataset):
@@ -64,7 +64,7 @@ class DissolvedLandUse(Dataset):
     @classmethod
     def download(cls, **kwargs):
         land = cp_data.LandUse.get()
-        pumas = cp_data.LandUse.get()
+        pumas = cp_data.PUMAs.get()
 
         join = gpd.sjoin(land, pumas, how="inner", op="within")
 
@@ -74,37 +74,84 @@ class DissolvedLandUse(Dataset):
             list_polys.append(create_multipolygon(i))
 
         return pd.concat(list_polys)
-
-
-class NewConstruction(Dataset):
+           
+           
+           
+class VacantLand(Dataset):
     """
-    Building and Zoning Permits 
-    Available: 2007 to Present, Updated Daily 
-    Selected: 2018 
+    The location of properties across Philadelphia that are likely to be a 
+    vacant lot based on an assessment of City of Philadelphia administrative datasets.
     
     Source
     ------
-    https://www.opendataphilly.org/dataset/licenses-and-inspections-building-permits
+    https://www.opendataphilly.org/dataset/vacant-property-indicators
     """
 
     @classmethod
     def download(cls, **kwargs):
+        
+        fields = [
+            "OBJECTID", 
+            "ADDRESS", 
+            "LAND_RANK",
+        ]
 
-        url = "https://phl.carto.com/api/v2/sql"
-        where = "extract(year from permitissuedate) = 2018 and permitdescription = 'NEW CONSTRUCTION PERMIT'"
-        gdf = carto2gpd.get(url, "li_permits", where=where)
-
-        return (
-            replace_missing_geometries(gdf)
-            .to_crs(epsg=EPSG)
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Vacant_Indicators_Land/FeatureServer/0"
+        gdf = esri2gpd.get(url, fields=fields)
+        
+        return ( 
+             gdf.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
-            .assign(
-                permitissuedate=lambda df: pd.to_datetime(df.permitissuedate),
-                year=lambda df: df.permitissuedate.dt.year,
-            )
-            .sort_values("permitissuedate", ascending=False)
-            .reset_index(drop=True)
         )
+               
+           
+class VacantBuilding(Dataset):
+    """
+    The location of properties across Philadelphia that are likely to be a 
+    vacant building based on an assessment of City of Philadelphia administrative datasets.
+    
+    Source
+    ------
+    https://www.opendataphilly.org/dataset/vacant-property-indicators
+    """
+
+    @classmethod
+    def download(cls, **kwargs):
+        
+        fields = [
+            "OBJECTID", 
+            "ADDRESS", 
+            "BUILD_RANK",
+        ]
+
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Vacant_Indicators_Bldg/FeatureServer/0"
+        gdf = esri2gpd.get(url, fields=fields)
+        
+        return ( 
+             gdf.to_crs(epsg=EPSG)
+            .pipe(geocode, ZIPCodes.get())
+            .pipe(geocode, Neighborhoods.get())
+            .pipe(geocode, PUMAs.get())
+        )
+                          
+
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+           
+
 
