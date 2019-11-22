@@ -208,6 +208,7 @@ class LIrequests(Dataset):
     """
     Service requests that were entered via 311 
     Available: 2007-present, Updated Daily 
+    
     Selected: 2018 
     
     Source
@@ -236,9 +237,5 @@ class LIrequests(Dataset):
             .sort_values("sr_calldate", ascending=False)
             .reset_index(drop=True)
         )
-
-
-    
-
     
    
