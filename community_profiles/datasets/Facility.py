@@ -5,12 +5,7 @@ from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
 
 
-__all__ = [
-    "CityOwned", 
-    "Parks", 
-    "Hospitals", 
-    "HealthCenters",
-]
+__all__ = ["CityOwned", "Parks", "Hospitals", "HealthCenters"]
 
 
 class CityOwned(Dataset):
@@ -30,14 +25,13 @@ class CityOwned(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.to_crs(epsg=EPSG) 
+            df.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
- 
 
-    
+
 class Parks(Dataset):
     """
     Philadephia's Parks & Recreation Assets
@@ -49,26 +43,20 @@ class Parks(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
-        
-        fields = [
-            "OBJECTID", 
-            "ASSET_NAME", 
-            "SITE_NAME", 
-            "ADDRESS" ,
-        ]
+
+        fields = ["OBJECTID", "ASSET_NAME", "SITE_NAME", "ADDRESS"]
 
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/PPR_Assets/FeatureServer/0"
         gdf = esri2gpd.get(url, fields=fields)
-        
-        return ( 
-             gdf.to_crs(epsg=EPSG)
+
+        return (
+            gdf.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
-    
-    
+
+
 class Hospitals(Dataset):
     """
     Philadephia's hospitals 
@@ -80,26 +68,20 @@ class Hospitals(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
-        
-        fields= [ 
-            "OBJECTID",
-            "HOSPITAL_NAME", 
-            "STREET_ADDRESS", 
-            "HOSPITAL_TYPE" ,
-        ]
-        
+
+        fields = ["OBJECTID", "HOSPITAL_NAME", "STREET_ADDRESS", "HOSPITAL_TYPE"]
+
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Hospitals/FeatureServer/0"
         gdf = esri2gpd.get(url, fields=fields)
-        
+
         return (
-             gdf.to_crs(epsg=EPSG)
+            gdf.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
-    
-    
+
+
 class HealthCenters(Dataset):
     """
     Federally Qualified Health Centers
@@ -116,12 +98,10 @@ class HealthCenters(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.loc[:, ['NAME','OBJECTID' ,'FULL_ADDRE', 'geometry']]
+            df.loc[:, ["NAME", "OBJECTID", "FULL_ADDRE", "geometry"]]
             .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
-    
-    
+

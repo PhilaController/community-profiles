@@ -10,6 +10,7 @@ from .householdincome import *
 from .housing import *
 from .language import *
 from .localjobs import *
+from .oppatlas import *
 from .medianage import *
 from .medianearnings import *
 from .medianhouseholdincome import *

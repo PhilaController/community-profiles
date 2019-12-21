@@ -1,28 +1,24 @@
-import esri2gpd
-import geopandas as gpd
 from . import EPSG
+from .. import data_dir
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
 import pandas as pd
-import numpy as np 
+import geopandas as gpd
+import numpy as np
+from shapely.geometry import Point
 import tempfile
 import requests, zipfile, io
 
 
+__all__ = ["Schools", "SchoolScores", "SchoolSurvey", "GraduationRates"]
 
 
-__all__ = [
-    "Schools",
-    "SchoolScores",
-    "SchoolSurvey",
-    "GraduationRate",
-]
-
-    
 class Schools(Dataset):
     """
     Philadephia's schools (all types) 
     
+    SY 2019-2020
+
     Source
     ------
     https://phl.maps.arcgis.com/home/item.html?id=d46a7e59e2c246c891fbee778759717e
@@ -30,29 +26,22 @@ class Schools(Dataset):
 
     @classmethod
     def download(cls, **kwargs):
-        
-        fields = [
-            "LOCATION_ID", 
-            "SCHOOL_NAME", 
-            "STREET_ADDRESS",
-            "GRADE_LEVEL", 
-            "GRADE_ORG",
-            "TYPE", 
-            "TYPE_SPECIFIC",
-        ]
 
-        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Schools/FeatureServer/0"
-        return (
-            esri2gpd.get(url, fields = fields)
-            .to_crs(epsg=EPSG)   
-            .pipe(geocode, ZIPCodes.get())
-            .pipe(geocode, Neighborhoods.get())
-            .pipe(geocode, PUMAs.get())
+        # Load the raw data
+        url = "https://cdn.philasd.org/offices/performance/Open_Data/School_Information/School_List/2019-2020%20Master%20School%20List%20(20191218).csv"
+        df = pd.read_csv(url)
+
+        # Convert GPS column to geometry
+        df["geometry"] = df["GPS Location"].apply(
+            lambda x: Point(*tuple(map(float, x.split(",")[::-1])))
         )
 
-    
-    
-    
+        # Return a GeoDataFrame
+        return gpd.GeoDataFrame(
+            df, geometry="geometry", crs={"init": "epsg:4326"}
+        ).to_crs(epsg=EPSG)
+
+
 class SchoolScores(Dataset):
     """
     Developed in 2019 and include data for the 2017-2018 School Progress Reports. 
@@ -66,35 +55,52 @@ class SchoolScores(Dataset):
     @classmethod
     def download(cls, **kwargs):
 
-        url = ("https://cdn.philasd.org/offices/performance/Open_Data/School_Performance/"
-                "School_Progress_Report/SPR_SY1718_School_Metric_Scores_20190129.xlsx") 
-        df = pd.read_excel(url, sheet_name='SPR SY2017-2018 ES')
+        # Load the raw data
+        url = (
+            "https://cdn.philasd.org/offices/performance/Open_Data/School_Performance/"
+            "School_Progress_Report/SPR_SY1718_School_Metric_Scores_20190129.xlsx"
+        )
+        df = pd.read_excel(url, sheet_name="SPR SY2017-2018")
 
-        return df    
+        # Load geometries for schools and merge them in
+        schools = Schools.get()[["ULCS Code", "Goverance", "School Level", "geometry"]]
 
-    
-    
-def extract_question_data(df, text):
-    
+        for a in [schools, df]:
+            a["ULCS Code"] = a["ULCS Code"].astype(str)
+        df = schools.merge(df, on="ULCS Code")
+
+        # Make overall score a float (non-numbers are set to NaN)
+        df["Overall Score"] = pd.to_numeric(df["Overall Score"], errors="coerce")
+
+        return df
+
+
+def _extract_question_data(df, text):
+
     # Trim to only columns that start with Q
     cols = df.filter(regex="^Q.*", axis=1)
 
-    # Combine the first two rows into a single string
-    questions = cols.iloc[[0, 1]].apply(lambda col: " ".join(col), axis=0)
+    # # Combine the first two rows into a single string
+    questions = (
+        cols.iloc[[0, 1]]
+        .fillna("")
+        .astype(str)
+        .apply(lambda col: " ".join(col), axis=0)
+    )
 
-    # Find the exact question that contains the input text string
-    matches = questions.str.contains(text)
+    # # Find the exact question that contains the input text string
+    matches = questions.str.lower().str.contains(text.lower())
 
     # Zero matches is bad
     if matches.sum() == 0:
-            matches = questions == text
-            if matches.sum() == 0:
-                raise ValueError("No matching question")
+        matches = questions == text
+        if matches.sum() == 0:
+            raise ValueError(f"No matching question for question '{text}'")
 
     # More than one match is also bad
     if matches.sum() > 1:
         raise ValueError(
-            "Input text matched multiple questions, please be more specific."
+            f"Input text '{text}' matched multiple questions, please be more specific."
         )
 
     # Figure out the question number from the index
@@ -107,25 +113,29 @@ def extract_question_data(df, text):
     valid_cols = list(df.columns[:2]) + list(df.columns[i : i + 8])
     subset = df[valid_cols]
 
-    # Extract out the categories (Rarely, Sometimes, etc)
-    categories = list(subset.iloc[2].dropna())  # remove first entry "School Name"
-    categories = categories[-4:]
-    
+    # Start
+    start = subset.index[subset[subset.columns[0]].str.contains("ULCS Code", na=False)][
+        0
+    ]
+    categories = subset.iloc[start - 1].dropna().tolist()
+
     # Re-format into tidy format
     # We need to handle the "Count" and "Row N %" columns separately
     combined = []
     for label in ["Count", "Row N %"]:
 
         # Get the cols containing the "Count" or "Row N %" data
-        cols = subset.columns[subset.iloc[3].str.contains(label, na=False)]
-        cols = list(subset.columns[:2]) + list(cols)  # Add in School Name and ULCS Code
-        subset2 = subset[cols]
+        cols = (
+            subset.columns[[0, 1]].tolist()  # ULCS Code and School Name
+            + subset.columns[subset.iloc[start].str.contains(label, na=False)].tolist()
+        )
+        subset2 = subset.iloc[start + 1 :][cols]
 
         # Set the columns to the categories
         subset2.columns = ["ULCS Code", "School Name"] + categories
 
         # Convert from a wide to tidy format
-        melted = subset2.iloc[4:].melt(
+        melted = subset2.melt(
             id_vars=["School Name", "ULCS Code"],
             var_name="category",
             value_name="value",
@@ -144,79 +154,108 @@ def extract_question_data(df, text):
     out["question"] = question_text
 
     return out
-    
-    
-    
-    
-    
+
+
 class SchoolSurvey(Dataset):
     """
-    Student, parent/guardian, and teacher response data from the District-wide survey for those schools 
-    that met the response rate thresholds for 2017-2018.
+    Student, parent/guardian, and teacher response data from the District-wide 
+    survey for those schools that met the response rate thresholds
 
     Source
     ------
     https://www.philasd.org/performance/programsservices/open-data/school-performance/#school_progress_report
     """
 
+    SCHOOL_YEAR = [2018, 2019]
+
+    @classmethod
+    def get_path(cls, kind="student"):
+        return data_dir / cls.__name__ / kind
+
+    @classmethod
+    def get(cls, fresh=False, kind="student"):
+        """
+        Load the dataset, optionally downloading a fresh copy.
+        
+        Parameters
+        ---------
+        fresh : bool, optional
+            a boolean keyword that specifies whether a fresh copy of the 
+            dataset should be downloaded
+        kind : str, optional
+            kind of responses: 'student', 'parent', or 'teacher'
+        """
+        # Verify input level
+        allowed = ["student", "parent", "teacher"]
+        if kind not in allowed:
+            raise ValueError(f"Allowed values for 'lind' are: {allowed}")
+
+        # return
+        return cls.process(super().get(fresh=fresh, kind=kind), kind=kind)
+
     @classmethod
     def download(cls, **kwargs):
 
+        # what kind of response to return?
+        kind = kwargs.get("kind", "student")
 
+        # download to a temporary directory first
         with tempfile.TemporaryDirectory() as tmpdirname:
-            url = ('https://cdn.philasd.org/offices/performance/Open_Data/School_Information/'
-                   'District_Wide_Survey/2017_2018_All_Respondent_Data.zip')
+
+            # Download the ZIP file
+            url = (
+                "https://cdn.philasd.org/offices/performance/Open_Data/School_Information/"
+                f"District_Wide_Survey/{cls.SCHOOL_YEAR[0]}_{cls.SCHOOL_YEAR[1]}_All_Respondent_Data.zip"
+            )
             r = requests.get(url)
             z = zipfile.ZipFile(io.BytesIO(r.content))
-            z.extractall(path = tmpdirname)
-        
-            
-            df_p = pd.read_excel(z.open('2017-2018 Parent School Level.xlsx'), sheet_name='1718 Parent')
-            df_s = pd.read_excel(z.open('2017-2018 Student School Level.xlsx'), sheet_name='1718 Student')
-            df_t = pd.read_excel(z.open('2017-2018 Teacher School Level.xlsx'), sheet_name='1718 Teacher')
-            
-            
-            parent_q = [
-                    "I am pleased with the quality of education my child's school is providing for my child.", 
-                    "Unsafe walking route to school",
-                   ]
+            z.extractall(path=tmpdirname)
 
-            student_q = [
-                    "The school building is in good condition.", 
-                    "My school is clean.", 
-                    "I feel safe in the neighborhood surrounding my school.",
-                    "I feel safe going to and from school.",
-                    ] 
+            # tags
+            tag = "-".join(map(str, cls.SCHOOL_YEAR))  # this is 2018-2019
+            sheet_tag = "".join(map(lambda x: str(x)[-2:], cls.SCHOOL_YEAR))  # 1819
+            kind = kind.capitalize()
 
-            teacher_q = [
-                    ("To what extent do you consider each of the following factors\xa0a challenge"
-                    " to student learning in your school? School crime/safety"),
-                    ("To what extent do you consider each of the following factors\xa0a "
-                     "challenge to student learning in your school? Lack of computers or other technological resources"),
-                    ("To what extent do you consider each of the following factors a challenge to student learning in your school?"
-                      " Neighborhood crime/safety"),
-                    ]
-            
-            parent_df = []
-            for q in parent_q:
-                    parent_df.append(extract_question_data(df_p, q))
-            df1 = pd.concat(parent_df)
-                    
-            student_df = []
-            for q in student_q:
-                    student_df.append(extract_question_data(df_s, q))
-            df2 = pd.concat(student_df)
+            return pd.read_excel(
+                z.open(f"{tag} {kind} School Level.xlsx"),
+                sheet_name=f"{sheet_tag} {kind}",
+            )
 
-            teacher_df = []
-            for q in teacher_q:
-                    teacher_df.append(extract_question_data(df_t, q))                    
-            df3 = pd.concat(teacher_df)       
-                    
+    @classmethod
+    def process(cls, df, kind="student"):
 
-        return pd.concat([df1,df2, df3]) 
-    
-    
-class GraduationRate(Dataset):
+        if kind == "parent":
+            questions = ["quality of education", "unsafe walking route to school"]
+        elif kind == "student":
+            questions = [
+                "The school building is in good condition",
+                "My school is clean",
+                "I feel safe in the neighborhood surrounding my school",
+                "I feel safe going to and from school",
+            ]
+        elif kind == "teacher":
+            questions = [
+                "School crime/safety",
+                "Students have inadequate basic skills or prior preparation",
+                "Neighborhood crime/safety",
+            ]
+
+        # Combine all of the questions
+        out = []
+        for q in questions:
+            extract = _extract_question_data(df, q)
+            extract["question_tag"] = q
+            out.append(extract)
+        out = pd.concat(out)
+
+        # Load geometries for schools and merge them in
+        schools = Schools.get()[["ULCS Code", "Governance", "School Level", "geometry"]]
+        for a in [schools, out]:
+            a["ULCS Code"] = a["ULCS Code"].astype(str)
+        return schools.merge(out, on="ULCS Code")
+
+
+class GraduationRates(Dataset):
     """
     Developed in 2019 for the 2017-2018 counts and percentages of students who have graduated in four years 
     and in six years by school. 
@@ -226,23 +265,30 @@ class GraduationRate(Dataset):
     Students are attributed to the last school they attend in the four- or six-year window, which ends on September 30 of 
     their expected graduation year. 
     
-    Note: Doas not include Charter Schools.
+    Note: Does not include Charter Schools.
 
     Source
     ------
     https://www.philasd.org/performance/programsservices/open-data/school-performance/#school_graduation_rates
    
     """
-    
+
     @classmethod
     def download(cls, **kwargs):
 
-        url = ("https://cdn.philasd.org/offices/performance/Open_Data/School_Performance/Graduation_Rates/"
-               "FT9%20SY2014-15%20Grad%20Rates%20Suppressed.csv") 
-        
-        df = pd.read_csv(url)
+        # Load the raw data
+        url = (
+            "https://cdn.philasd.org/offices/performance/Open_Data/School_Performance/Graduation_Rates/"
+            "FT9%20SY2014-15%20Grad%20Rates%20Suppressed.csv"
+        )
 
-        return df    
-    
+        df = pd.read_csv(url).rename(columns={"srcschoolid": "SRC School ID"})
+        df["SRC School ID"] = df["SRC School ID"].astype(str)
 
-    
+        # Load geometries for schools and merge them in
+        schools = Schools.get()[
+            ["ULCS Code", "SRC School ID", "Governance", "School Level", "geometry"]
+        ]
+        schools["SRC School ID"] = schools["SRC School ID"].astype(str)
+        return schools.merge(df, on="SRC School ID")
+
