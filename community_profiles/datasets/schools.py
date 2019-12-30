@@ -63,7 +63,7 @@ class SchoolScores(Dataset):
         df = pd.read_excel(url, sheet_name="SPR SY2017-2018")
 
         # Load geometries for schools and merge them in
-        schools = Schools.get()[["ULCS Code", "Goverance", "School Level", "geometry"]]
+        schools = Schools.get(fresh=True)[["ULCS Code", "Governance", "School Level", "geometry"]]
 
         for a in [schools, df]:
             a["ULCS Code"] = a["ULCS Code"].astype(str)
@@ -249,7 +249,7 @@ class SchoolSurvey(Dataset):
         out = pd.concat(out)
 
         # Load geometries for schools and merge them in
-        schools = Schools.get()[["ULCS Code", "Governance", "School Level", "geometry"]]
+        schools = Schools.get(fresh=True)[["ULCS Code", "Governance", "School Level", "geometry"]]
         for a in [schools, out]:
             a["ULCS Code"] = a["ULCS Code"].astype(str)
         return schools.merge(out, on="ULCS Code")
@@ -286,7 +286,7 @@ class GraduationRates(Dataset):
         df["SRC School ID"] = df["SRC School ID"].astype(str)
 
         # Load geometries for schools and merge them in
-        schools = Schools.get()[
+        schools = Schools.get(fresh=True)[
             ["ULCS Code", "SRC School ID", "Governance", "School Level", "geometry"]
         ]
         schools["SRC School ID"] = schools["SRC School ID"].astype(str)
