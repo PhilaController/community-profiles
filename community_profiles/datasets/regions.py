@@ -1,34 +1,23 @@
 import esri2gpd
-import cenpy as cen
-import geopandas as gpd
 import os
 from . import EPSG
-from .core import Dataset, data_dir
+from .core import DatasetWithYear, Dataset
 
 __all__ = ["CensusTracts", "Neighborhoods", "ZIPCodes", "CityLimits", "PUMAs"]
 
 DEFAULT_YEAR = 2018
 
 
-class CensusTracts(Dataset):
+class CensusTracts(DatasetWithYear):
     """
     The boundary regions for census tracts in Philadelphia 
     from the 2010 Census.
     """
 
     @classmethod
-    def get_path(cls, year=DEFAULT_YEAR):
-        return data_dir / cls.__name__ / str(year)
+    def download(cls, year=DEFAULT_YEAR):
 
-    @classmethod
-    def download(cls, **kwargs):
-        """
-        Download the census tract boundaries
-        """
         from phlcensus.regions import CensusTracts
-
-        # Get the year
-        year = kwargs.get("year", DEFAULT_YEAR)
 
         return (
             CensusTracts.get(year=year)[["geometry", "geo_name"]]
@@ -37,25 +26,16 @@ class CensusTracts(Dataset):
         )
 
 
-class PUMAs(Dataset):
+class PUMAs(DatasetWithYear):
     """
     The boundary regions for the Public Use Microdata Areas (PUMAs) 
     in Philadelphia from the 2010 Census.
     """
 
     @classmethod
-    def get_path(cls, year=DEFAULT_YEAR):
-        return data_dir / cls.__name__ / str(year)
+    def download(cls, year=DEFAULT_YEAR):
 
-    @classmethod
-    def download(cls, **kwargs):
-        """
-        Download the PUMA boundaries
-        """
         from phlcensus.regions import PUMAs
-
-        # Get the year
-        year = kwargs.get("year", DEFAULT_YEAR)
 
         return (
             PUMAs.get(year=year)[["geometry", "geo_name"]]
@@ -86,11 +66,8 @@ class Neighborhoods(Dataset):
 
     Notes
     -----
-    These are Zillow-based neighborhoods.
-
-    Source
-    ------
-    https://phl.maps.arcgis.com/home/item.html?id=ab9d26be1df8486c8d5d706fb32b33d5
+    These are based on the Neighborhood Tabulation Areas defined
+    in the `phlcensus` library.
     """
 
     @classmethod

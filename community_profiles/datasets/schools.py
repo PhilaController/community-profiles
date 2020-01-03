@@ -78,6 +78,16 @@ class SchoolScores(Dataset):
 
 
 def _extract_question_data(df, text):
+    """
+    Internal function to extract question responses from a school survey.
+
+    Parameters
+    ----------
+    df : DataFrame
+        the raw survey data
+    text : str
+        the question snippet we are using to identify the responses to return.
+    """
 
     # Trim to only columns that start with Q
     cols = df.filter(regex="^Q.*", axis=1)
@@ -160,7 +170,7 @@ def _extract_question_data(df, text):
 
 class SchoolSurvey(Dataset):
     """
-    Student, parent/guardian, and teacher response data from the District-wide 
+    Student, parent/guardian, and teacher response data from the District-wide
     survey for those schools that met the response rate thresholds
 
     Source

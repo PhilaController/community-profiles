@@ -1,18 +1,21 @@
 import carto2gpd
 import geopandas as gpd
 import pandas as pd
-from . import EPSG
-from .core import Dataset, geocode, replace_missing_geometries
+from . import EPSG, DEFAULT_YEAR
+from .core import *
 from .regions import *
 
-__all__ = [
-    "three11",
-]
+__all__ = ["ServiceRequests311"]
 
-class three11(Dataset):
+
+class ServiceRequests311(DatasetWithYear):
     """
-    311 service requets
-    Available: December 8th 2014-Present, Updated Daily 
+    311 service requests
+
+    Notes
+    -----
+    Available: 2015 to Present
+    Update frequency: daily 
     
     Source
     ------
@@ -22,10 +25,14 @@ class three11(Dataset):
     date_columns = ["requested_datetime"]
 
     @classmethod
-    def download(cls, **kwargs):
-        
+    def download(cls, year=DEFAULT_YEAR):
+
         url = "https://phl.carto.com/api/v2/sql"
-        gdf = carto2gpd.get(url, "public_cases_fc")
+        gdf = carto2gpd.get(
+            url,
+            "public_cases_fc",
+            where=f"extract(year from requested_datetime) = {year}",
+        )
 
         return (
             replace_missing_geometries(gdf)

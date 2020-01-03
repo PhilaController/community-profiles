@@ -1,21 +1,25 @@
 import esri2gpd
 import geopandas as gpd
 from . import EPSG
-from .core import Dataset, geocode, replace_missing_geometries
+from .core import Dataset, geocode
 from .regions import *
 
 
-__all__ = [
-    "StreetCondition", 
-    "LitterIndex",
-]
+__all__ = ["StreetDefectRepairRating", "LitterIndex"]
 
 
-
-class StreetCondition(Dataset):
+class StreetDefectRepairRating(Dataset):
     """
-    Street Defect Rating
-    
+    Street Defect Repair Rating
+
+    Notes
+    -----
+    Rates streets from 0 to 100 based on the number of street defect repairs
+    since 2013, accounting for the different lengths of streets across the city.
+    Streets with a high rating have had more defect repairs than average since
+    2013, while streets with a lower rating have had fewer repairs than the
+    citywide average over that time period.
+
     Source
     ------
     http://phl.maps.arcgis.com/home/item.html?id=288d67ea531c4e1a96ebe43a78b97ca8
@@ -26,41 +30,37 @@ class StreetCondition(Dataset):
 
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Street_Defect_Rating/FeatureServer/0"
         gdf = esri2gpd.get(url)
-        
-        return ( 
-             gdf.to_crs(epsg=EPSG)
+
+        return (
+            gdf.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
 
 
 class LitterIndex(Dataset):
     """
     Litter Index scores calculated for each street hundred-block.
-    2017-2018
+    
+    Notes
+    -----
+    Time period: 2017-2018
 
     Source
     ------
-    http://data-phl.opendata.arcgis.com/datasets/04fa63e09b284dbfbde1983eab367319_0.zip
+    https://www.opendataphilly.org/dataset/litter-index
     """
 
     @classmethod
     def download(cls, **kwargs):
-        
-    
 
-        url = "http://data-phl.opendata.arcgis.com/datasets/04fa63e09b284dbfbde1983eab367319_0.zip"
-        df = gpd.read_file(url)
-
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Litter_Index_Blocks/FeatureServer/0"
         return (
-            df.rename(columns={ 'HUNDRED_BL' : 'score'}) 
-            .to_crs(epsg=EPSG) 
+            esri2gpd.get(url)
+            .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
- 
 
-    
