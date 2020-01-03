@@ -1,31 +1,35 @@
 import esri2gpd
-import geopandas as gpd
 from . import EPSG
-from .core import Dataset, geocode, replace_missing_geometries
+from .core import *
 from .regions import *
 
 
-__all__ = ["CityOwned", "Parks", "Hospitals", "HealthCenters"]
+__all__ = ["CityOwnedFacilities", "Parks", "Hospitals", "HealthCenters"]
 
 
-class CityOwned(Dataset):
+class CityOwnedFacilities(Dataset):
     """
-    An inventory of buildings and other fixed assets owned, leased, 
-    or operated by the City of Philadelphia including buildings, structures, and properties.
+    An inventory of buildings and other fixed assets owned, leased, or operated
+    by the City of Philadelphia including buildings, structures, and properties.
+
+    Notes
+    -----
+    Date range: 2000 to 2016
+    Last updated: 2016
 
     Source
     ------
-    http://data.phl.opendata.arcgis.com/datasets/b3c133c3b15d4c96bcd4d5cc09f19f4e_0.zip
+    https://www.opendataphilly.org/dataset/city-facilities-master-facilities-database
     """
 
     @classmethod
     def download(cls, **kwargs):
 
-        url = "http://data.phl.opendata.arcgis.com/datasets/b3c133c3b15d4c96bcd4d5cc09f19f4e_0.zip"
-        df = gpd.read_file(url)
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/City_Facilities_pub/FeatureServer/0"
 
         return (
-            df.to_crs(epsg=EPSG)
+            esri2gpd.get(url)
+            .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
@@ -34,23 +38,25 @@ class CityOwned(Dataset):
 
 class Parks(Dataset):
     """
-    Philadephia's Parks & Recreation Assets
-    
+    Philadelphia Parks and Recreation owned/maintained buildings and facilities
+    that can be used for programming and inventory purposes.
+
+    Notes
+    -----
+    Update frequency: monthly
+
     Source
     ------
-    https://phl.maps.arcgis.com/home/item.html?id=4df9250e3d624ea090718e56a9018694
+    https://www.opendataphilly.org/dataset/parks-and-recreation-assets
     """
 
     @classmethod
     def download(cls, **kwargs):
 
-        fields = ["OBJECTID", "ASSET_NAME", "SITE_NAME", "ADDRESS"]
-
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/PPR_Assets/FeatureServer/0"
-        gdf = esri2gpd.get(url, fields=fields)
-
         return (
-            gdf.to_crs(epsg=EPSG)
+            esri2gpd.get(url, fields=["OBJECTID", "ASSET_NAME", "SITE_NAME", "ADDRESS"])
+            .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
@@ -69,13 +75,11 @@ class Hospitals(Dataset):
     @classmethod
     def download(cls, **kwargs):
 
-        fields = ["OBJECTID", "HOSPITAL_NAME", "STREET_ADDRESS", "HOSPITAL_TYPE"]
-
         url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Hospitals/FeatureServer/0"
-        gdf = esri2gpd.get(url, fields=fields)
 
         return (
-            gdf.to_crs(epsg=EPSG)
+            esri2gpd.get(url)
+            .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
@@ -84,21 +88,23 @@ class Hospitals(Dataset):
 
 class HealthCenters(Dataset):
     """
-    Federally Qualified Health Centers
+    Federally qualified health centers.
+
+    Notes
+    -----
+    Update frequency: yearly
 
     Source
     ------
-    http://data.phl.opendata.arcgis.com/datasets/f87c257e1039470a8a472694c2cd2e4f_0.zip
+    https://www.opendataphilly.org/dataset/health-centers
     """
 
     @classmethod
     def download(cls, **kwargs):
 
-        url = "http://data.phl.opendata.arcgis.com/datasets/f87c257e1039470a8a472694c2cd2e4f_0.zip"
-        df = gpd.read_file(url)
-
+        url = "https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Health_Centers/FeatureServer/0"
         return (
-            df.loc[:, ["NAME", "OBJECTID", "FULL_ADDRE", "geometry"]]
+            esri2gpd.get(url)
             .to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())

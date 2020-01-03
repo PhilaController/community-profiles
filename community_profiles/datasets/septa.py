@@ -4,15 +4,9 @@ from . import EPSG
 from .core import Dataset, geocode, replace_missing_geometries
 from .regions import *
 
-__all__ = [
-    "RegionalRail", 
-    "BoardStLine", 
-    "MFLine", 
-    "Bus",
-]
+__all__ = ["RegionalRail", "BroadStLine", "MFLine", "Bus"]
 
 
-    
 class RegionalRail(Dataset):
     """
     Spring 2018 Regional Rail Rail Stations with Ridership. 
@@ -30,14 +24,14 @@ class RegionalRail(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.to_crs(epsg=EPSG) 
+            df.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
 
-class BoardStLine(Dataset):
+
+class BroadStLine(Dataset):
     """
     Spring 2018 Broad Street Line Stations with Ridership. 
     Station ridership data is from FY17 turn-style counts and excludes free interchange riders.
@@ -54,13 +48,12 @@ class BoardStLine(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.to_crs(epsg=EPSG) 
+            df.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-    
-        
+
 
 class MFLine(Dataset):
     """
@@ -78,13 +71,13 @@ class MFLine(Dataset):
         url = "https://opendata.arcgis.com/datasets/8c6e2575c8ad46eb887e6bb35825e1a6_0.zip"
         df = gpd.read_file(url)
 
-        return ( 
-            df.to_crs(epsg=EPSG) 
+        return (
+            df.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
-        
+
 
 class Bus(Dataset):
     """
@@ -103,12 +96,9 @@ class Bus(Dataset):
         df = gpd.read_file(url)
 
         return (
-            df.to_crs(epsg=EPSG) 
+            df.to_crs(epsg=EPSG)
             .pipe(geocode, ZIPCodes.get())
             .pipe(geocode, Neighborhoods.get())
             .pipe(geocode, PUMAs.get())
         )
 
-    
-    
-    

@@ -1,32 +1,38 @@
 import carto2gpd
 import pandas as pd
-import geopandas as gpd
-from . import EPSG
-from .core import Dataset, geocode, replace_missing_geometries
+from . import EPSG, DEFAULT_YEAR
+from .core import *
 from .regions import *
 
 
-__all__ = ["NewConstruction"]
+__all__ = ["NewConstructionPermits"]
 
 
-
-class NewConstruction(Dataset):
+class NewConstructionPermits(DatasetWithYear):
     """
-    Building and Zoning Permits 
-    Available: 2007 to Present, Updated Daily 
-    Selected: 2018 
+    New construction building permits.
+
+    Notes
+    -----
+    Available: 2007 to present
+    Update frequency: daily 
     
     Source
     ------
     https://www.opendataphilly.org/dataset/licenses-and-inspections-building-permits
     """
 
-    @classmethod
-    def download(cls, **kwargs):
+    date_columns = ["permitissuedate"]
 
-        url = "https://phl.carto.com/api/v2/sql"
-        where = "extract(year from permitissuedate) = 2018 and permitdescription = 'NEW CONSTRUCTION PERMIT'"
-        gdf = carto2gpd.get(url, "li_permits", where=where)
+    @classmethod
+    def download(cls, year=DEFAULT_YEAR):
+
+        # Query CARTO
+        gdf = carto2gpd.get(
+            "https://phl.carto.com/api/v2/sql",
+            "li_permits",
+            where=f"extract(year from permitissuedate) = {year} and permitdescription = 'NEW CONSTRUCTION PERMIT'",
+        )
 
         return (
             replace_missing_geometries(gdf)
