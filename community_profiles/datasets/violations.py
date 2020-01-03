@@ -1,5 +1,4 @@
 import carto2gpd
-import geopandas as gpd
 import pandas as pd
 from . import EPSG, DEFAULT_YEAR
 from .core import *
