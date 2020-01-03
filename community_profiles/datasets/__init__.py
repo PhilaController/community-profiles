@@ -17,6 +17,11 @@ from .three11 import *
 from .trees import *
 from .vacancy import *
 from .violations import *
+from .vehicularcrashes import * 
+from .demolitions import *
+from .foodretail import * 
+from .propertytaxdelinquecies import * 
+from .trashcans import *
 
 
 from .regions import *
