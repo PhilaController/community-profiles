@@ -161,6 +161,7 @@ class DatasetWithYear(Dataset):
         year : int, optional
             the data year to download
         """
+
         return super().get(fresh=fresh, year=year)
 
 

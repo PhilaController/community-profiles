@@ -1,11 +1,11 @@
 import esri2gpd
 import geopandas as gpd
 from . import EPSG
-from .core import Dataset, geocode
+from .core import *
 from .regions import *
 
 
-__all__ = ["StreetDefectRepairRating", "LitterIndex"]
+__all__ = ["StreetDefectRepairRating", "LitterIndex", "PavedMiles"]
 
 
 class StreetDefectRepairRating(Dataset):
@@ -64,3 +64,43 @@ class LitterIndex(Dataset):
             .pipe(geocode, PUMAs.get())
         )
 
+
+class PavedMiles(Dataset):
+    """
+    The number of miles paved from 2013 to 2018 in the
+    City of Philadelphia.
+
+    Notes
+    -----
+    Excludes PennDOT managed roads, so only includes
+    the "local" and "FAM" networks.
+    """
+
+    @classmethod
+    def get_path(cls, level="tract"):
+        return data_dir / cls.__name__ / str(level)
+
+    @classmethod
+    def download(cls, level="tract"):
+
+        path = cls.get_path(level=level)
+        return pd.read_csv(path / "data.csv")
+
+    @classmethod
+    def get(cls, fresh=False, level="tract"):
+        """
+        Load the dataset, optionally downloading a fresh copy.
+
+        Parameters
+        ---------
+        fresh : bool, optional
+            a boolean keyword that specifies whether a fresh copy of the 
+            dataset should be downloaded
+        leve : str, optional
+            the aggregation level, one of 'tract', 'nta', 'puma', or 'city'
+        """
+        allowed = ["tract", "nta", "puma", "city"]
+        if level not in allowed:
+            raise ValueError(f"allowed values for 'level' are: {allowed}")
+
+        return super().get(fresh=fresh, level=level)

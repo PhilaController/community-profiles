@@ -6,6 +6,8 @@ from .businesslicenses import *
 from .census import *
 from .commercialcorridors import *
 from .crime import *
+from .cra import *
+from .hmda import *
 from .landuse import *
 from .newconstruction import *
 from .realestatetransfers import *
@@ -17,10 +19,10 @@ from .three11 import *
 from .trees import *
 from .vacancy import *
 from .violations import *
-from .vehicularcrashes import * 
+from .vehicularcrashes import *
 from .demolitions import *
-from .foodretail import * 
-from .propertytaxdelinquecies import * 
+from .foodretail import *
+from .propertytaxdelinquecies import *
 from .trashcans import *
 
 
